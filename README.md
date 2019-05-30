@@ -19,23 +19,32 @@ import "exquisite2007/go_rocketmq_client"
 # Getting started
 ### Getting message with consumer
 ```
+package main
+import (
+    "github.com/exquisite2007/go_rocketmq_client"
+    "time"
+    "fmt"
+    )
+
+func main() {
 group := "dev-VodHotClacSrcData"
-topic := "canal_vod_collect__video_collected_count_live"
-var timeSleep = 30 * time.Second
+topic := "TopicTest"
+var timeSleep =1800 * time.Second
 conf := &rocketmq.Config{
-    Nameserver:   "192.168.7.101:9876;192.168.7.102:9876;192.168.7.103:9876",
+    Namesrv:   "localhost:9876",
+    ClientIp:     "192.168.1.23",
     InstanceName: "DEFAULT",
 }
 
-consumer, err := rocketmq.NewDefaultConsumer(consumerGroup, consumerConf)
+consumer, err := rocketmq.NewDefaultConsumer(group, conf)
 if err != nil {
-    return err
+    return 
 }
-consumer.Subscribe(consumerTopic, "*")
+consumer.Subscribe(topic, "*")
 consumer.RegisterMessageListener(
-    func(msgs []*MessageExt) error {
+    func(msgs []*rocketmq.MessageExt) error {
         for i, msg := range msgs {
-            fmt.Println("msg", i, msg.Topic, msg.Flag, msg.Properties, string(msg.Body))
+            fmt.Println("msg", i, msg.Topic, msg.Flag, msg.Properties,"haha ", string(msg.Body))
         }
         fmt.Println("Consume success!")
         return nil
@@ -43,29 +52,37 @@ consumer.RegisterMessageListener(
 consumer.Start()
 
 time.Sleep(timeSleep)
+}
 ```
 
 ### Sending message with producer
 - Synchronous sending
 ```
-group := "dev-VodHotClacSrcData"
-topic := "canal_vod_collect__video_collected_count_live"
-conf := &rocketmq.Config{
-    Nameserver:   "192.168.7.101:9876;192.168.7.102:9876;192.168.7.103:9876",
-    ClientIp:     "192.168.1.23",
-    InstanceName: "DEFAULT",
-}
+package main
+import (
+    "github.com/exquisite2007/go_rocketmq_client"
+    "fmt"
+    )
+func main() {
+    group := "dev-VodHotClacSrcData"
+    topic := "TopicTest"
+    conf := &rocketmq.Config{
+        Namesrv:   "localhost:9876",
+        ClientIp:     "192.168.1.23",
+        InstanceName: "DEFAULT",
+    }
 
-producer, err := rocketmq.NewDefaultProducer(group, conf)
-producer.Start()
-if err != nil {
-    return errors.New("NewDefaultProducer err")
-}
-msg := NewMessage(topic, []byte("Hello RocketMQ!")
-if sendResult, err := producer.Send(msg); err != nil {
-    return errors.New("Sync sending fail!")
-} else {
-    fmt.Println("Sync sending success!, ", sendResult)
+    producer, err := rocketmq.NewDefaultProducer(group, conf)
+    producer.Start()
+    if err != nil {
+        return 
+    }
+    msg := rocketmq.NewMessage(topic, []byte("wonderful!"))
+    if sendResult, err := producer.Send(msg); err != nil {
+        return 
+    } else {
+        fmt.Println("Sync sending success!, ", sendResult)
+    }
 }
 ```
 
