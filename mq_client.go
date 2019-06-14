@@ -437,17 +437,17 @@ func topicRouteData2TopicPublishInfo(topic string, route *TopicRouteData) (publi
 }
 
 type ConsumerData struct {
-	GroupName           string
-	ConsumerType        string
-	MessageModel        string
-	ConsumeFromWhere    string
-	SubscriptionDataSet []*SubscriptionData
-	UnitMode            bool
+	GroupName           string `json:"groupName"`
+	ConsumeType        string `json:"consumeType"`
+	MessageModel        string `json:"messageModel"`
+	ConsumeFromWhere    string `json:"consumeFromWhere"`
+	SubscriptionDataSet []*SubscriptionData `json:"subscriptionDataSet"`
+	UnitMode            bool `json:"unitMode"`
 }
 
 type HeartbeatData struct {
-	ClientId        string
-	ConsumerDataSet []*ConsumerData
+	ClientId        string  `json:"clientID"`
+	ConsumerDataSet []*ConsumerData `json:"consumerDataSet"`
 }
 
 func (m *MqClient) prepareHeartbeatData() *HeartbeatData {
@@ -457,9 +457,11 @@ func (m *MqClient) prepareHeartbeatData() *HeartbeatData {
 	for group, consumer := range m.consumerTable {
 		consumerData := new(ConsumerData)
 		consumerData.GroupName = group
-		consumerData.ConsumerType = consumer.consumerType
+		// consumerData.ConsumerType = consumer.consumerType
+		consumerData.ConsumeType = "CONSUME_PASSIVELY"
 		consumerData.ConsumeFromWhere = consumer.consumeFromWhere
-		consumerData.MessageModel = consumer.messageModel
+		// consumerData.MessageModel = consumer.messageModel
+		consumerData.MessageModel = "CLUSTERING"
 		consumerData.SubscriptionDataSet = consumer.subscriptions()
 		consumerData.UnitMode = consumer.unitMode
 
@@ -483,7 +485,7 @@ func (m *MqClient) sendHeartbeatToAllBrokerWithLock() error {
 			currOpaque := atomic.AddInt32(&opaque, 1)
 			remotingCommand := &RemotingCommand{
 				Code:     HeartBeat,
-				Language: "JAVA",
+				Language: "GO",
 				Version:  79,
 				Opaque:   currOpaque,
 				Flag:     0,
@@ -495,10 +497,10 @@ func (m *MqClient) sendHeartbeatToAllBrokerWithLock() error {
 				return err
 			}
 			remotingCommand.Body = data
-			fmt.Fprintln(os.Stderr, "send heartbeat to broker[", addr+"]")
+			fmt.Fprintln(os.Stderr, "send heartbeat to broker[", string(data)+"]")
 			response, err := m.remotingClient.invokeSync(addr, remotingCommand, 3000)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				fmt.Fprintln(os.Stderr, err,"here")
 			} else {
 				if response == nil || response.Code != Success {
 					fmt.Fprintln(os.Stderr, "send heartbeat response  error")

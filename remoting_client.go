@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"io"
 )
 
 type InvokeCallback func(responseFuture *ResponseFuture)
@@ -233,10 +234,13 @@ func (d *DefaultRemotingClient) handlerConn(conn net.Conn, addr string) {
 	var flag = 0
 	for {
 		n, err := conn.Read(b)
+		if err == io.EOF {
+			fmt.Println(err, addr,"end line")
+			return
+		}
 		if err != nil {
 			d.releaseConn(addr, conn)
-			fmt.Println(err, addr)
-
+			fmt.Println(err, addr,"release connection")
 			return
 		}
 
@@ -251,7 +255,7 @@ func (d *DefaultRemotingClient) handlerConn(conn net.Conn, addr string) {
 				if buf.Len() >= 4 {
 					err = binary.Read(buf, binary.BigEndian, &length)
 					if err != nil {
-						fmt.Println(err)
+						fmt.Println(err,"0")
 						return
 					}
 					flag = 1
@@ -264,7 +268,7 @@ func (d *DefaultRemotingClient) handlerConn(conn net.Conn, addr string) {
 				if buf.Len() >= 4 {
 					err = binary.Read(buf, binary.BigEndian, &headerLength)
 					if err != nil {
-						fmt.Println(err)
+						fmt.Println(err,"1")
 						return
 					}
 					flag = 2
@@ -279,7 +283,7 @@ func (d *DefaultRemotingClient) handlerConn(conn net.Conn, addr string) {
 					header = make([]byte, headerLength)
 					_, err = buf.Read(header)
 					if err != nil {
-						fmt.Println(err)
+						fmt.Println(err,"2")
 						return
 					}
 					flag = 3
@@ -307,7 +311,7 @@ func (d *DefaultRemotingClient) handlerConn(conn net.Conn, addr string) {
 					}
 				}
 			}
-
+            
 			if flag == 0 {
 				headerCopy := make([]byte, len(header))
 				bodyCopy := make([]byte, len(body))

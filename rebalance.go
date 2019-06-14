@@ -8,12 +8,12 @@ import (
 )
 
 type SubscriptionData struct {
-	Topic           string
-	SubString       string
-	ClassFilterMode bool
-	TagsSet         []string
-	CodeSet         []string
-	SubVersion      int64
+	Topic           string `json:"topic"`
+	SubString       string `json:"subString"`
+	ClassFilterMode bool `json:"classFilterMode"`
+	TagsSet         []string `json:"tagsSet"`
+	CodeSet         []string `json:"codeSet"`
+	SubVersion      int64 `json:"subVersion"`
 }
 type Rebalance struct {
 	groupName                    string

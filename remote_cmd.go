@@ -32,6 +32,7 @@ type RemotingCommand struct {
 	Flag      int         `json:"flag"`
 	remark    string      `json:"remark"`
 	ExtFields interface{} `json:"extFields"`
+	SerializeTypeCurrentRPC string `json:"serializeTypeCurrentRPC"`
 	// body
 	Body []byte `json:"body,omitempty"`
 }
