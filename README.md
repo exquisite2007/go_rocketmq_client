@@ -65,11 +65,10 @@ import (
     "fmt"
     )
 func main() {
-    group := "dev-VodHotClacSrcData"
-    topic := "TopicTest"
+    group := "test"
+    topic := "BenchmarkTest"
     conf := &rocketmq.Config{
         Namesrv:   "localhost:9876",
-        ClientIp:     "192.168.1.23",
         InstanceName: "DEFAULT",
     }
 
