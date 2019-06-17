@@ -151,7 +151,7 @@ func (d *DefaultRemotingClient) invokeSync(addr string, request *RemotingCommand
 	}
 
 	header := request.encodeHeader()
-	fmt.Println("prepare send header:",string(header))
+	// fmt.Println("prepare send header:",string(header))
 	body := request.Body
 
 	d.responseTableLock.Lock()
@@ -360,25 +360,14 @@ func (d *DefaultRemotingClient) sendRequest(header, body []byte, conn net.Conn, 
 	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, int32(len(header)+len(body)+4))
 	binary.Write(buf, binary.BigEndian, int32(len(header)))
+
+	buf.Write(header)
+	buf.Write(body)
 	_, err := conn.Write(buf.Bytes())
 
 	if err != nil {
 		d.releaseConn(addr, conn)
 		return err
-	}
-
-	_, err = conn.Write(header)
-	if err != nil {
-		d.releaseConn(addr, conn)
-		return err
-	}
-
-	if body != nil && len(body) > 0 {
-		_, err = conn.Write(body)
-		if err != nil {
-			d.releaseConn(addr, conn)
-			return err
-		}
 	}
 
 	return nil

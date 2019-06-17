@@ -13,6 +13,7 @@ Rocketmq作为国内少有的apache开源项目，官方对go用户的支持却�
 - 客户端需要从nameserver获取topic的路由信息
 - 消费者需要做负载均衡
 
+
 # Import package
 import "exquisite2007/go_rocketmq_client"
 
