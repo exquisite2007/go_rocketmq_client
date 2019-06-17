@@ -204,7 +204,7 @@ func (m *MqClient) getConsumerIdListByGroup(addr string, consumerGroup string, t
 	currOpaque := atomic.AddInt32(&opaque, 1)
 	request := &RemotingCommand{
 		Code:      GetConsumerListByGroup,
-		Language:  "JAVA",
+		Language:  "GO",
 		Version:   79,
 		Opaque:    currOpaque,
 		Flag:      0,
@@ -242,7 +242,7 @@ func (m *MqClient) getTopicRouteInfoFromNameServer(topic string, timeoutMillis i
 	currOpaque := atomic.AddInt32(&opaque, 1)
 	remotingCommand.Opaque = currOpaque
 	remotingCommand.Flag = 0
-	remotingCommand.Language = "JAVA"
+	remotingCommand.Language = "GO"
 	remotingCommand.Version = 79
 
 	remotingCommand.ExtFields = requestHeader
@@ -497,7 +497,7 @@ func (m *MqClient) sendHeartbeatToAllBrokerWithLock() error {
 				return err
 			}
 			remotingCommand.Body = data
-			fmt.Fprintln(os.Stderr, "send heartbeat to broker[", string(data)+"]")
+			fmt.Fprintln(os.Stderr, "send heartbeat to broker[", addr+"]")
 			response, err := m.remotingClient.invokeSync(addr, remotingCommand, 3000)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err,"here")
@@ -583,7 +583,7 @@ func (m *MqClient) queryConsumerOffset(addr string, requestHeader *QueryConsumer
 	currOpaque := atomic.AddInt32(&opaque, 1)
 	remotingCommand := &RemotingCommand{
 		Code:     QueryConsumerOffset,
-		Language: "JAVA",
+		Language: "GO",
 		Version:  79,
 		Opaque:   currOpaque,
 		Flag:     0,
@@ -621,7 +621,7 @@ func (m *MqClient) updateConsumerOffsetOneway(addr string, header *UpdateConsume
 	currOpaque := atomic.AddInt32(&opaque, 1)
 	remotingCommand := &RemotingCommand{
 		Code:      QueryConsumerOffset,
-		Language:  "JAVA",
+		Language:  "GO",
 		Version:   79,
 		Opaque:    currOpaque,
 		Flag:      0,

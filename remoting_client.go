@@ -141,7 +141,7 @@ func (d *DefaultRemotingClient) invokeSync(addr string, request *RemotingCommand
 			return nil, err
 		}
 	}
-
+	
 	response := &ResponseFuture{
 		sendRequestOK:  false,
 		opaque:         request.Opaque,
@@ -151,6 +151,7 @@ func (d *DefaultRemotingClient) invokeSync(addr string, request *RemotingCommand
 	}
 
 	header := request.encodeHeader()
+	fmt.Println("prepare send header:",string(header))
 	body := request.Body
 
 	d.responseTableLock.Lock()
@@ -165,7 +166,7 @@ func (d *DefaultRemotingClient) invokeSync(addr string, request *RemotingCommand
 	select {
 	case <-response.done:
 		return response.responseCommand, nil
-	case <-time.After(3 * time.Second):
+	case <-time.After(10 * time.Second):
 		return nil, errors.New("invoke sync timeout")
 	}
 
