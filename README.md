@@ -18,9 +18,9 @@ Rocketmq作为国内少有的apache开源项目，官方对go用户的支持却�
 - 消费者需要做负载均衡
 
 基于原有fork版本的变更：
--解决发包分片问题导致心跳被broker中断
--解决多台主机client 的负载均衡问题
--解决心跳包上报缺失连接信息导致的控制台输出慢
+- 解决发包分片问题导致心跳被broker中断
+- 解决多台主机client 的负载均衡问题
+- 解决心跳包上报缺失连接信息导致的控制台输出慢
 
 # Import package
 import "exquisite2007/go_rocketmq_client"
