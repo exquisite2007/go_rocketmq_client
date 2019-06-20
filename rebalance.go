@@ -117,7 +117,7 @@ func (r *AllocateMessageQueueAveragely) allocate(consumerGroup string, currentCI
 		}
 	}
 
-	return nil, errors.New("cant't find currentCID")
+	return nil, nil
 }
 
 func (r *Rebalance) rebalanceByTopic(topic string) error {
@@ -140,17 +140,32 @@ func (r *Rebalance) rebalanceByTopic(topic string) error {
 
 	allocateResult, err := r.allocateMessageQueueStrategy.allocate(r.groupName, r.mqClient.clientId, mqs, cidAll)
 
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
 	fmt.Printf("rebalance topic[%s]\n", topic)
 	r.updateProcessQueueTableInRebalance(topic, allocateResult)
 	return nil
 }
 
 func (r *Rebalance) updateProcessQueueTableInRebalance(topic string, mqSet []*MessageQueue) {
+	if mqSet ==nil{ 
+		pgt := make(map[MessageQueue] int32)
+		r.processQueueTableLock.Lock()
+		r.processQueueTable=pgt
+		r.processQueueTableLock.Unlock()
+		return
+	}
+	r.processQueueTableLock.Lock()
+	for pgmq,_ := range r.processQueueTable{
+		exist := false
+		for _,mq := range mqSet {
+			if(mq.brokerName == pgmq.brokerName && mq.queueId == pgmq.queueId){
+				exist=true
+			}
+		}
+		if !exist {
+			delete(r.processQueueTable,pgmq)
+		}
+	}
+	r.processQueueTableLock.Unlock()
 	for _, mq := range mqSet {
 		r.processQueueTableLock.RLock()
 		_, ok := r.processQueueTable[*mq]

@@ -57,7 +57,7 @@ type DefaultConsumer struct {
 func NewDefaultConsumer(consumerGroup string, conf *Config) (Consumer, error) {
 	if conf == nil {
 		conf = &Config{
-			Namesrv:      os.Getenv("ROCKETMQ_NAMESVR"),
+			Namesrv:      os.Getenv("NAMESRV_ADDR"),
 			InstanceName: "DEFAULT",
 		}
 	}
@@ -144,6 +144,12 @@ func (c *DefaultConsumer) fetchSubscribeMessageQueues(topic string) error {
 
 func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 
+	c.rebalance.processQueueTableLock.RLock()
+	_, ok := c.rebalance.processQueueTable[*pullRequest.messageQueue]
+	c.rebalance.processQueueTableLock.RUnlock()
+	if !ok {
+		return
+	}
 	commitOffsetEnable := false
 	commitOffsetValue := int64(0)
 
