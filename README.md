@@ -21,6 +21,7 @@ Rocketmq作为国内少有的apache开源项目，官方对go用户的支持却�
 - 解决发包分片问题导致心跳被broker中断
 - 解决多台主机client 的负载均衡问题
 - 解决心跳包上报缺失连接信息导致的控制台输出慢
+- 解决批量拉取的问题
 
 # Import package
 import "exquisite2007/go_rocketmq_client"
@@ -41,7 +42,6 @@ topic := "TopicTest"
 var timeSleep =1800 * time.Second
 conf := &rocketmq.Config{
     Namesrv:   "localhost:9876",
-    ClientIp:     "192.168.1.23",
     InstanceName: "DEFAULT",
 }
 
