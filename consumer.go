@@ -180,7 +180,7 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 	requestHeader.Topic = pullRequest.messageQueue.topic
 	requestHeader.QueueId = pullRequest.messageQueue.queueId
 	requestHeader.QueueOffset = pullRequest.nextOffset
-
+    requestHeader.MaxMsgNums = 10
 	requestHeader.SysFlag = sysFlag
 	requestHeader.CommitOffset = commitOffsetValue
 	requestHeader.SuspendTimeoutMillis = BrokerSuspendMaxTimeMillis

@@ -61,4 +61,20 @@ const (
 	ConsumerNotOnline = 206
 	// Consumer消费消息超时
 	ConsumeMsgTimeout = 207
+	// 消息ID定长
+	MSG_ID_LENGTH = 8 + 8
+
+	// 属性key与value，在byte[]的分隔符
+	NAME_VALUE_SEPARATOR = 0x1
+
+	// 消息属性在byte[]的分隔符
+	PROPERTY_SEPARATOR = 0x2
+
+	// 消息key
+	PROPERTY_KEYS = "KEYS"
+
+	// 消息TAG
+	PROPERTY_TAGS = "TAGS"
+
+	KEY_SEPARATOR = " "
 )

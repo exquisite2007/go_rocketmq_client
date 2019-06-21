@@ -46,19 +46,19 @@ func NewMessage(topic string, body []byte) *Message {
 
 type MessageExt struct {
 	Message
-	QueueId       int32
-	StoreSize     int32
-	QueueOffset   int64
-	SysFlag       int32
-	BornTimestamp int64
-	// bornHost
-	StoreTimestamp int64
-	// storeHost
-	MsgId                     string
-	CommitLogOffset           int64
-	BodyCRC                   int32
-	ReconsumeTimes            int32
-	PreparedTransactionOffset int64
+	QueueId                   int32  `json:"queueId"`
+	StoreSize                 int32  `json:"storeSize"`
+	QueueOffset               int64  `json:"queueOffset"`
+	SysFlag                   int32  `json:"sysFlag"`
+	BornTimestamp             int64  `json:"bornTimestamp"`
+	BornHost      			  string `json:"bornHost"`
+	StoreTimestamp            int64  `json:"storeTimestamp"`
+	StoreHost                 string `json:"storeHost"`
+	MsgId                     string `json:"msgId"`
+	CommitLogOffset           int64  `json:"commitLogOffset"`
+	BodyCRC                   int32  `json:"bodyCRC"`
+	ReconsumeTimes            int32  `json:"reconsumeTimes"`
+	PreparedTransactionOffset int64  `json:"preparedTransactionOffset"`
 }
 
 func decodeMessage(data []byte) []*MessageExt {
@@ -70,31 +70,47 @@ func decodeMessage(data []byte) []*MessageExt {
 	var propertiesLength int16
 
 	var propertiesMap map[string]string
-
 	msgs := make([]*MessageExt, 0, 32)
+
+	
 	for buf.Len() > 0 {
 		msg := new(MessageExt)
+		//1
 		binary.Read(buf, binary.BigEndian, &storeSize)
+		//2
 		binary.Read(buf, binary.BigEndian, &magicCode)
+		//3
 		binary.Read(buf, binary.BigEndian, &bodyCRC)
+		//4
 		binary.Read(buf, binary.BigEndian, &queueId)
+		//5
 		binary.Read(buf, binary.BigEndian, &flag)
+		//6
 		binary.Read(buf, binary.BigEndian, &queueOffset)
+		//7
 		binary.Read(buf, binary.BigEndian, &physicOffset)
+		//8
 		binary.Read(buf, binary.BigEndian, &sysFlag)
+		//9
 		binary.Read(buf, binary.BigEndian, &bornTimeStamp)
+		//10
 		bornHost = make([]byte, 4)
 		binary.Read(buf, binary.BigEndian, &bornHost)
 		binary.Read(buf, binary.BigEndian, &bornPort)
+		//11
 		binary.Read(buf, binary.BigEndian, &storeTimestamp)
+		//12
 		storeHost = make([]byte, 4)
 		binary.Read(buf, binary.BigEndian, &storeHost)
 		binary.Read(buf, binary.BigEndian, &storePort)
+		//13
 		binary.Read(buf, binary.BigEndian, &reconsumeTimes)
 		binary.Read(buf, binary.BigEndian, &preparedTransactionOffset)
+		//14
 		binary.Read(buf, binary.BigEndian, &bodyLength)
 		if bodyLength > 0 {
 			body = make([]byte, bodyLength)
+			//15
 			binary.Read(buf, binary.BigEndian, body)
 
 			if (sysFlag & CompressedFlag) == CompressedFlag {
@@ -110,12 +126,14 @@ func decodeMessage(data []byte) []*MessageExt {
 					fmt.Println(err)
 					return nil
 				}
-			}
 
+			}
 		}
+		//16
 		binary.Read(buf, binary.BigEndian, &topicLen)
-		topic = make([]byte, 0)
+		topic = make([]byte, topicLen)
 		binary.Read(buf, binary.BigEndian, &topic)
+		//17
 		binary.Read(buf, binary.BigEndian, &propertiesLength)
 		if propertiesLength > 0 {
 			properties = make([]byte, propertiesLength)
@@ -128,17 +146,19 @@ func decodeMessage(data []byte) []*MessageExt {
 			fmt.Printf("magic code is error %d", magicCode)
 			return nil
 		}
-
 		msg.Topic = string(topic)
 		msg.QueueId = queueId
 		msg.SysFlag = sysFlag
 		msg.QueueOffset = queueOffset
 		msg.BodyCRC = bodyCRC
 		msg.StoreSize = storeSize
+		msg.BornHost = convertHostString(bornHost, bornPort)
 		msg.BornTimestamp = bornTimeStamp
 		msg.ReconsumeTimes = reconsumeTimes
 		msg.Flag = flag
-		//msg.commitLogOffset=physicOffset
+		msg.CommitLogOffset=physicOffset
+		msg.MsgId = convertMessageId(storeHost, storePort, physicOffset)
+		msg.StoreHost = convertHostString(storeHost, storePort)
 		msg.StoreTimestamp = storeTimestamp
 		msg.PreparedTransactionOffset = preparedTransactionOffset
 		msg.Body = body
@@ -148,6 +168,29 @@ func decodeMessage(data []byte) []*MessageExt {
 	}
 
 	return msgs
+}
+
+func convertMessageId(storeHost []byte, storePort int32, offset int64) string {
+	buffMsgId := make([]byte, MSG_ID_LENGTH)
+	input := bytes.NewBuffer(buffMsgId)
+	input.Reset()
+	input.Grow(MSG_ID_LENGTH)
+	input.Write(storeHost)
+
+	storePortBytes := int32ToBytes(storePort)
+	input.Write(storePortBytes)
+
+	offsetBytes := int64ToBytes(offset)
+	input.Write(offsetBytes)
+
+	return bytesToHexString(input.Bytes())
+}
+
+// 根据ip和port，解析host
+func convertHostString(ipBytes []byte, port int32) string {
+	ip := bytesToIPv4String(ipBytes)
+
+	return fmt.Sprintf("%s:%s", ip, strconv.FormatInt(int64(port), 10))
 }
 
 func messageProperties2String(properties map[string]string) string {
