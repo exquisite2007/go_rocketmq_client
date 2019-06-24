@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/binary"
-	"encoding/json"
+	// "encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -69,7 +69,7 @@ func decodeMessage(data []byte) []*MessageExt {
 	var topic, body, properties, bornHost, storeHost []byte
 	var propertiesLength int16
 
-	var propertiesMap map[string]string
+	// var propertiesMap map[string]string
 	msgs := make([]*MessageExt, 0, 32)
 
 	
@@ -138,8 +138,7 @@ func decodeMessage(data []byte) []*MessageExt {
 		if propertiesLength > 0 {
 			properties = make([]byte, propertiesLength)
 			binary.Read(buf, binary.BigEndian, &properties)
-			propertiesMap = make(map[string]string)
-			json.Unmarshal(properties, &propertiesMap)
+			msg.Properties = convertProperties(properties)
 		}
 
 		if magicCode != -626843481 {
@@ -162,7 +161,7 @@ func decodeMessage(data []byte) []*MessageExt {
 		msg.StoreTimestamp = storeTimestamp
 		msg.PreparedTransactionOffset = preparedTransactionOffset
 		msg.Body = body
-		msg.Properties = propertiesMap
+		// msg.Properties = propertiesMap
 
 		msgs = append(msgs, msg)
 	}
@@ -192,7 +191,31 @@ func convertHostString(ipBytes []byte, port int32) string {
 
 	return fmt.Sprintf("%s:%s", ip, strconv.FormatInt(int64(port), 10))
 }
+func convertProperties(buf []byte) map[string]string {
 
+	tbuf := buf
+	properties := make(map[string]string)
+	for len(tbuf) > 0 {
+		pi := bytes.IndexByte(tbuf, PROPERTY_SEPARATOR)
+		if pi == -1 {
+			break
+		}
+
+		propertie := tbuf[0:pi]
+
+		ni := bytes.IndexByte(propertie, NAME_VALUE_SEPARATOR)
+		if ni == -1 || ni > pi {
+			break
+		}
+
+		key := string(propertie[0:ni])
+		properties[key] = string(propertie[ni+1:])
+
+		tbuf = tbuf[pi+1:]
+	}
+
+	return properties
+}
 func messageProperties2String(properties map[string]string) string {
 	StringBuilder := bytes.NewBuffer([]byte{})
 	if properties != nil && len(properties) != 0 {

@@ -25,6 +25,7 @@ type Config struct {
 	Namesrv      string
 	ClientIp     string
 	InstanceName string
+	MaxMsgNums 	 int32
 }
 
 type Consumer interface {
@@ -180,7 +181,7 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 	requestHeader.Topic = pullRequest.messageQueue.topic
 	requestHeader.QueueId = pullRequest.messageQueue.queueId
 	requestHeader.QueueOffset = pullRequest.nextOffset
-    requestHeader.MaxMsgNums = 10
+    requestHeader.MaxMsgNums = c.conf.MaxMsgNums
 	requestHeader.SysFlag = sysFlag
 	requestHeader.CommitOffset = commitOffsetValue
 	requestHeader.SuspendTimeoutMillis = BrokerSuspendMaxTimeMillis
