@@ -117,13 +117,13 @@ func decodeMessage(data []byte) []*MessageExt {
 				b := bytes.NewReader(body)
 				z, err := zlib.NewReader(b)
 				if err != nil {
-					fmt.Println(err)
+				Error.Println(err)
 					return nil
 				}
 				defer z.Close()
 				body, err = ioutil.ReadAll(z)
 				if err != nil {
-					fmt.Println(err)
+				Error.Println(err)
 					return nil
 				}
 
@@ -142,7 +142,7 @@ func decodeMessage(data []byte) []*MessageExt {
 		}
 
 		if magicCode != -626843481 {
-			fmt.Printf("magic code is error %d", magicCode)
+		Warning.Printf("magic code is error %d", magicCode)
 			return nil
 		}
 		msg.Topic = string(topic)
@@ -189,7 +189,7 @@ func convertMessageId(storeHost []byte, storePort int32, offset int64) string {
 func convertHostString(ipBytes []byte, port int32) string {
 	ip := bytesToIPv4String(ipBytes)
 
-	return fmt.Sprintf("%s:%s", ip, strconv.FormatInt(int64(port), 10))
+	return  fmt.Sprintf("%s:%s", ip, strconv.FormatInt(int64(port), 10))
 }
 func convertProperties(buf []byte) map[string]string {
 

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"os"
 	"strconv"
@@ -12,6 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"fmt"
 )
 
 type GetRouteInfoRequestHeader struct {
@@ -177,7 +177,7 @@ func (m *MqClient) findConsumerIdList(topic string, groupName string) ([]string,
 	brokerAddr, ok := m.findBrokerAddrByTopic(topic)
 	if !ok {
 		_, err := m.updateTopicRouteInfoFromNameServerKernel(topic, false, DefaultProducer{})
-		fmt.Fprintln(os.Stderr, err)
+		Error.Println( err)
 		brokerAddr, ok = m.findBrokerAddrByTopic(topic)
 	}
 
@@ -213,7 +213,7 @@ func (m *MqClient) getConsumerIdListByGroup(addr string, consumerGroup string, t
 
 	response, err := m.remotingClient.invokeSync(addr, request, timeoutMillis)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		Error.Println( err)
 		return nil, err
 	}
 
@@ -223,7 +223,7 @@ func (m *MqClient) getConsumerIdListByGroup(addr string, consumerGroup string, t
 		bodyjson = strings.Replace(bodyjson, "1:", "\"1\":", -1)
 		err := json.Unmarshal([]byte(bodyjson), getConsumerListByGroupResponseBody)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			Error.Println( err)
 			return nil, err
 		}
 		return getConsumerListByGroupResponseBody.ConsumerIdList, nil
@@ -259,7 +259,7 @@ func (m *MqClient) getTopicRouteInfoFromNameServer(topic string, timeoutMillis i
 		bodyjson = strings.Replace(bodyjson, "{1:", "{\"1\":", -1)
 		err = json.Unmarshal([]byte(bodyjson), topicRouteData)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "json.Unmarshal", err)
+			Error.Println( "json.Unmarshal", err)
 			return nil, err
 		}
 		return topicRouteData, nil
@@ -327,7 +327,7 @@ func (m *MqClient) updateTopicRouteInfoFromNameServerKernel(topic string, isDefa
 	if isDefault && producer.producerGroup != "" {
 		topicRouteData, err = m.getTopicRouteInfoFromNameServer(producer.createTopicKey, 3000*1000)
 		if err != nil {
-			fmt.Println(err)
+			Error.Println(err)
 			return true, err
 		}
 		for _, data := range topicRouteData.QueueDatas {
@@ -346,7 +346,7 @@ func (m *MqClient) updateTopicRouteInfoFromNameServerKernel(topic string, isDefa
 		if !changed {
 			changed = m.isNeedUpdateTopicRouteInfo(topic)
 		} else {
-			fmt.Fprintln(os.Stderr, "the topic[{}] route info changed, old[{}] ,new[{}]", topic, old, topicRouteData)
+			Error.Printf( "the topic[{}] route info changed, old[{}] ,new[{}]", topic, old, topicRouteData)
 		}
 
 		if changed {
@@ -493,17 +493,17 @@ func (m *MqClient) sendHeartbeatToAllBrokerWithLock() error {
 
 			data, err := json.Marshal(*heartbeatData)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				Error.Println( err)
 				return err
 			}
 			remotingCommand.Body = data
-			fmt.Fprintln(os.Stderr, "send heartbeat to broker[", addr+"]")
+			Info.Println("send heartbeat to broker[", addr+"]")
 			response, err := m.remotingClient.invokeSync(addr, remotingCommand, 3000)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err,"here")
+				Error.Println(err)
 			} else {
 				if response == nil || response.Code != Success {
-					fmt.Fprintln(os.Stderr, "send heartbeat response  error")
+					Error.Println("send heartbeat response  error")
 				}
 			}
 		}
@@ -565,10 +565,10 @@ func (m *MqClient) start() {
 		if m.defaultProducer != nil {
 			m.defaultProducer.start(false)
 		}
-		fmt.Fprintf(os.Stderr, "The client factory [%s] start OK", m.clientId)
+		Info.Printf( "The client factory [%s] start OK", m.clientId)
 		m.serviceState = Running
 	case Running, ShutdownAlready, StartFailed:
-		fmt.Fprintf(os.Stderr, "The Factory object[%s] has been created before, and failed.", m.clientId)
+		Error.Printf( "The Factory object[%s] has been created before, and failed.", m.clientId)
 	}
 
 }
@@ -604,7 +604,7 @@ func (m *MqClient) queryConsumerOffset(addr string, requestHeader *QueryConsumer
 			if offsetStr, ok := offsetInter.(string); ok {
 				offset, err := strconv.ParseInt(offsetStr, 10, 64)
 				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
+					Error.Println( err)
 					return 0, err
 				}
 				return offset, nil
@@ -612,7 +612,7 @@ func (m *MqClient) queryConsumerOffset(addr string, requestHeader *QueryConsumer
 			}
 		}
 	}
-	fmt.Fprintln(os.Stderr, requestHeader, response)
+	Error.Println(requestHeader, response)
 	return 0, errors.New("query offset error")
 }
 
@@ -644,7 +644,7 @@ func (m *MqClient) registerProducer(group string, producer *DefaultProducer) boo
 		return false
 	}
 	if _, err := m.producerTable[group]; err {
-		fmt.Fprintln(os.Stderr, "the producer group[{}] exist already.", group)
+		Error.Printf("the producer group[{}] exist already.", group)
 		return false
 	} else {
 		m.producerTable[group] = producer

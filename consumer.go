@@ -1,7 +1,7 @@
 package rocketmq
 
 import (
-	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -106,6 +106,7 @@ func NewDefaultConsumer(consumerGroup string, conf *Config) (Consumer, error) {
 }
 
 func (c *DefaultConsumer) Start() error {
+	InitLog(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 	c.mqClient.start()
 	return nil
 }
@@ -204,7 +205,7 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 						if nextBeginOffsetStr, ok := nextBeginOffsetInter.(string); ok {
 							nextBeginOffset, err = strconv.ParseInt(nextBeginOffsetStr, 10, 64)
 							if err != nil {
-								fmt.Println(err)
+								Error.Println(err)
 								return
 							}
 						}
@@ -214,14 +215,14 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 				msgs := decodeMessage(responseFuture.responseCommand.Body)
 				err = c.messageListener(msgs)
 				if err != nil {
-					fmt.Println(err)
+					Error.Println(err)
 					//TODO retry
 				} else {
 					c.offsetStore.updateOffset(pullRequest.messageQueue, nextBeginOffset, false)
 				}
 			} else if responseCommand.Code == PullNotFound {
 			} else if responseCommand.Code == PullRetryImmediately || responseCommand.Code == PullOffsetMoved {
-				fmt.Printf("pull message error,code=%d,request=%v", responseCommand.Code, requestHeader)
+				Info.Printf("pull message error,code=%d,request=%v", responseCommand.Code, requestHeader)
 				var err error
 				pullResult, ok := responseCommand.ExtFields.(map[string]interface{})
 				if ok {
@@ -229,19 +230,18 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 						if nextBeginOffsetStr, ok := nextBeginOffsetInter.(string); ok {
 							nextBeginOffset, err = strconv.ParseInt(nextBeginOffsetStr, 10, 64)
 							if err != nil {
-								fmt.Println(err)
+								Error.Println(err)
 							}
 						}
 					}
 				}
 				//time.Sleep(1 * time.Second)
 			} else {
-				fmt.Println(fmt.Sprintf("pull message error,code=%d,body=%s", responseCommand.Code, string(responseCommand.Body)))
-				fmt.Println(pullRequest.messageQueue)
+				Error.Printf("pull message error,code=%d,body=%s", responseCommand.Code, string(responseCommand.Body))
 				time.Sleep(1 * time.Second)
 			}
 		} else {
-			fmt.Println("responseFuture is nil")
+			Info.Println("responseFuture is nil")
 		}
 
 		nextPullRequest := &PullRequest{

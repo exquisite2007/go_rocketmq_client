@@ -2,9 +2,10 @@ package rocketmq
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"sync"
+	"fmt"
+	"strings"
 )
 
 type SubscriptionData struct {
@@ -79,6 +80,7 @@ func (r *AllocateMessageQueueAveragely) allocate(consumerGroup string, currentCI
 	}
 
 	result := make([]*MessageQueue, 0)
+	tmpStr := make([]string,0)
 	for i, cid := range cidAll {
 		if cid == currentCID {
 			mqLen := len(mqAll)
@@ -111,7 +113,9 @@ func (r *AllocateMessageQueueAveragely) allocate(consumerGroup string, currentCI
 
 			for j := 0; j < min; j++ {
 				result = append(result, mqAll[(startIndex+j)%mqLen])
+				tmpStr = append(tmpStr,fmt.Sprintf("%+v ",mqAll[(startIndex+j)%mqLen]))
 			}
+			Info.Printf("Rebalance allocate Result: %s",strings.Join(tmpStr,","))
 			return result, nil
 
 		}
@@ -123,7 +127,7 @@ func (r *AllocateMessageQueueAveragely) allocate(consumerGroup string, currentCI
 func (r *Rebalance) rebalanceByTopic(topic string) error {
 	cidAll, err := r.mqClient.findConsumerIdList(topic, r.groupName)
 	if err != nil {
-		fmt.Println(err)
+		Error.Println(err)
 		return err
 	}
 
@@ -140,7 +144,6 @@ func (r *Rebalance) rebalanceByTopic(topic string) error {
 
 	allocateResult, err := r.allocateMessageQueueStrategy.allocate(r.groupName, r.mqClient.clientId, mqs, cidAll)
 
-	fmt.Printf("rebalance topic[%s]\n", topic)
 	r.updateProcessQueueTableInRebalance(topic, allocateResult)
 	return nil
 }

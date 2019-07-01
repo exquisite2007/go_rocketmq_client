@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"log"
 	"strconv"
 	"sync"
 )
@@ -92,7 +91,7 @@ func decodeRemoteCommand(header, body []byte) *RemotingCommand {
 	cmd.ExtFields = make(map[string]string)
 	err := json.Unmarshal(header, cmd)
 	if err != nil {
-		log.Print(err)
+		Error.Println(err)
 		return nil
 	}
 	cmd.Body = body
