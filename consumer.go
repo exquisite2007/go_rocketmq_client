@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync/atomic"
 	"time"
+	"fmt"
 )
 
 const (
@@ -97,7 +98,7 @@ func NewDefaultConsumer(consumerGroup string, conf *Config) (Consumer, error) {
 	mqClient.consumerTable[consumerGroup] = consumer
 	mqClient.remotingClient = remotingClient
 	mqClient.conf = conf
-	mqClient.clientId = conf.ClientIp + "@" + strconv.Itoa(os.Getpid())
+	mqClient.clientId = fmt.Sprintf("%d@%d#%d",conf.ClientIp,os.Getpid(),time.Now().UnixNano())
 	mqClient.pullMessageService = pullMessageService
 
 	rebalance.consumer = consumer
