@@ -252,6 +252,7 @@ func (m *MqClient) getTopicRouteInfoFromNameServer(topic string, timeoutMillis i
 		return nil, err
 	}
 	if response.Code == Success {
+		Info.Println("Update RouteInfo",string(response.Body))
 		topicRouteData := new(TopicRouteData)
 		bodyjson := strings.Replace(string(response.Body), ",0:", ",\"0\":", -1)
 		bodyjson = strings.Replace(bodyjson, ",1:", ",\"1\":", -1)

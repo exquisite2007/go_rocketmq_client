@@ -150,11 +150,7 @@ func (r *Rebalance) rebalanceByTopic(topic string) error {
 
 func (r *Rebalance) updateProcessQueueTableInRebalance(topic string, mqSet []*MessageQueue) {
 	if mqSet ==nil{ 
-		pgt := make(map[MessageQueue] int32)
-		r.processQueueTableLock.Lock()
-		r.processQueueTable=pgt
-		r.processQueueTableLock.Unlock()
-		return
+		mqSet = make([]*MessageQueue, 0)
 	}
 	r.processQueueTableLock.Lock()
 	for pgmq,_ := range r.processQueueTable{
@@ -173,6 +169,7 @@ func (r *Rebalance) updateProcessQueueTableInRebalance(topic string, mqSet []*Me
 		r.processQueueTableLock.RLock()
 		_, ok := r.processQueueTable[*mq]
 		r.processQueueTableLock.RUnlock()
+
 		if !ok {
 			pullRequest := new(PullRequest)
 			pullRequest.consumerGroup = r.groupName

@@ -1,7 +1,7 @@
 package rocketmq
 
 import (
-	"io/ioutil"
+	
 	"net"
 	"os"
 	"strconv"
@@ -26,6 +26,7 @@ type Config struct {
 	ClientIp     string
 	InstanceName string
 	MaxMsgNums 	 int32
+	LogFileName  string
 }
 
 type Consumer interface {
@@ -106,12 +107,13 @@ func NewDefaultConsumer(consumerGroup string, conf *Config) (Consumer, error) {
 }
 
 func (c *DefaultConsumer) Start() error {
-	InitLog(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
+	InitLog(c.conf.LogFileName,"INFO")
 	c.mqClient.start()
 	return nil
 }
 
 func (c *DefaultConsumer) Shutdown() {
+	CloseLogFile()
 }
 
 func (c *DefaultConsumer) RegisterMessageListener(messageListener MessageListener) {
@@ -186,7 +188,6 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 	requestHeader.SysFlag = sysFlag
 	requestHeader.CommitOffset = commitOffsetValue
 	requestHeader.SuspendTimeoutMillis = BrokerSuspendMaxTimeMillis
-
 	if ok {
 		requestHeader.SubVersion = subVersion
 		requestHeader.Subscription = subString
@@ -201,6 +202,8 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 				var err error
 				pullResult, ok := responseCommand.ExtFields.(map[string]interface{})
 				if ok {
+				Info.Printf("send request: %+v\n%+v",requestHeader,responseCommand.ExtFields)
+
 					if nextBeginOffsetInter, ok := pullResult["nextBeginOffset"]; ok {
 						if nextBeginOffsetStr, ok := nextBeginOffsetInter.(string); ok {
 							nextBeginOffset, err = strconv.ParseInt(nextBeginOffsetStr, 10, 64)
@@ -265,7 +268,6 @@ func (c *DefaultConsumer) pullMessage(pullRequest *PullRequest) {
 		remotingCommand.Version = 79
 
 		remotingCommand.ExtFields = requestHeader
-
 		c.remotingClient.invokeAsync(brokerAddr, remotingCommand, 1000, pullCallback)
 	}
 }
